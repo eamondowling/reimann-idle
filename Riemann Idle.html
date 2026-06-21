@@ -1,0 +1,864 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Riemann Idle — Fail to Prove the Riemann Hypothesis</title>
+<style>
+  :root {
+    --bg: #0d0d0d;
+    --surface: #1a1a1a;
+    --chalk: #e8e4db;
+    --gold: #c9a84c;
+    --accent: #5b8c5a;
+    --fail: #c44d4d;
+    --ai-fail: #d4853a;
+    --zeta: #6b8fbf;
+    --text: #b8b4a8;
+    --muted: #6b6658;
+    --border: #2a2822;
+    --radius: 6px;
+    --font-math: 'Georgia', 'Times New Roman', serif;
+    --font-ui: 'Inter', 'Segoe UI', system-ui, sans-serif;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--font-ui);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    padding: 20px;
+    background-image:
+      radial-gradient(ellipse at 50% 0%, rgba(201,168,76,0.04) 0%, transparent 60%),
+      radial-gradient(ellipse at 80% 100%, rgba(107,143,191,0.03) 0%, transparent 50%);
+  }
+
+  .game {
+    max-width: 720px;
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  /* Header */
+  .header {
+    text-align: center;
+    padding: 24px 0 8px;
+  }
+  .header h1 {
+    font-family: var(--font-math);
+    font-size: 2rem;
+    color: var(--chalk);
+    letter-spacing: 0.02em;
+    font-weight: normal;
+  }
+  .header .subtitle {
+    font-size: 0.85rem;
+    color: var(--muted);
+    font-style: italic;
+    margin-top: 4px;
+  }
+  .zeta-display {
+    font-family: var(--font-math);
+    font-size: 1.1rem;
+    color: var(--zeta);
+    margin-top: 8px;
+    opacity: 0.7;
+  }
+
+  /* Main board */
+  .board {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  /* Progress section */
+  .progress-section {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  .progress-label {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.8rem;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+  }
+  .progress-label span:last-child {
+    font-family: var(--font-math);
+    color: var(--gold);
+  }
+  .progress-bar {
+    height: 8px;
+    background: var(--border);
+    border-radius: 4px;
+    overflow: hidden;
+  }
+  .progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--accent), var(--gold));
+    border-radius: 4px;
+    transition: width 0.3s ease;
+  }
+
+  /* Stats row */
+  .stats-row {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+  }
+  .stat-card {
+    background: rgba(255,255,255,0.03);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 12px;
+    text-align: center;
+  }
+  .stat-value {
+    font-family: var(--font-math);
+    font-size: 1.5rem;
+    color: var(--chalk);
+  }
+  .stat-label {
+    font-size: 0.7rem;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    margin-top: 2px;
+  }
+
+  /* Click area */
+  .click-zone {
+    display: flex;
+    justify-content: center;
+    padding: 8px 0;
+  }
+  .attempt-btn {
+    background: var(--surface);
+    border: 2px solid var(--gold);
+    color: var(--gold);
+    font-family: var(--font-math);
+    font-size: 1.1rem;
+    padding: 14px 40px;
+    border-radius: var(--radius);
+    cursor: pointer;
+    transition: all 0.15s ease;
+    letter-spacing: 0.04em;
+    user-select: none;
+  }
+  .attempt-btn:hover {
+    background: rgba(201,168,76,0.1);
+    transform: scale(1.02);
+  }
+  .attempt-btn:active {
+    transform: scale(0.97);
+    background: rgba(201,168,76,0.2);
+  }
+  .attempt-btn:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+    transform: none;
+  }
+
+  /* Last Failure Display */
+  .last-failure {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 16px;
+    text-align: center;
+    min-height: 80px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+  }
+  .last-failure-placeholder {
+    color: var(--muted);
+    font-style: italic;
+    font-size: 0.85rem;
+  }
+  .last-failure-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+  }
+  .last-failure-img {
+    max-width: 100%;
+    max-height: 300px;
+    border-radius: 4px;
+    border: 1px solid var(--border);
+  }
+  .last-failure-caption {
+    font-family: var(--font-math);
+    font-size: 0.9rem;
+    color: var(--fail);
+    font-style: italic;
+  }
+  .last-failure-caption.ai-caption {
+    color: var(--ai-fail);
+  }
+  .last-failure-desc {
+    font-size: 0.75rem;
+    color: var(--muted);
+    max-width: 500px;
+    line-height: 1.4;
+  }
+
+  /* Failure log */
+  .failures-header {
+    font-size: 0.8rem;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    margin-bottom: 4px;
+  }
+  .failures-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 6px;
+    max-height: 240px;
+    overflow-y: auto;
+    padding-right: 4px;
+  }
+  .failures-grid::-webkit-scrollbar { width: 4px; }
+  .failures-grid::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+
+  .failure-entry {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 6px 10px;
+    background: rgba(196,77,77,0.06);
+    border: 1px solid rgba(196,77,77,0.15);
+    border-radius: 4px;
+    font-size: 0.78rem;
+    transition: background 0.2s;
+  }
+  .failure-entry.ai-failure {
+    background: rgba(212,133,58,0.06);
+    border: 1px solid rgba(212,133,58,0.18);
+  }
+  .failure-entry.ai-failure .failure-count {
+    color: var(--ai-fail);
+  }
+  .failure-entry.flash {
+    background: rgba(196,77,77,0.2);
+    border-color: rgba(196,77,77,0.4);
+  }
+  .failure-entry.ai-failure.flash {
+    background: rgba(212,133,58,0.2);
+    border-color: rgba(212,133,58,0.4);
+  }
+  .failure-name {
+    color: var(--text);
+    font-style: italic;
+  }
+  .failure-count {
+    font-family: var(--font-math);
+    color: var(--fail);
+    font-weight: bold;
+    min-width: 28px;
+    text-align: right;
+  }
+
+  /* Upgrades */
+  .upgrades-section {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+  .upgrades-header {
+    font-size: 0.8rem;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+  }
+  .upgrade-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 12px;
+    background: rgba(255,255,255,0.02);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    font-size: 0.82rem;
+  }
+  .upgrade-info {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+  .upgrade-name {
+    color: var(--chalk);
+  }
+  .upgrade-effect {
+    font-size: 0.72rem;
+    color: var(--muted);
+    font-style: italic;
+  }
+  .upgrade-buy {
+    background: transparent;
+    border: 1px solid var(--accent);
+    color: var(--accent);
+    padding: 4px 14px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 0.75rem;
+    transition: all 0.15s;
+    white-space: nowrap;
+  }
+  .upgrade-buy:hover:not(:disabled) {
+    background: rgba(91,140,90,0.15);
+  }
+  .upgrade-buy:disabled {
+    opacity: 0.3;
+    cursor: not-allowed;
+  }
+  .upgrade-owned {
+    color: var(--gold);
+    font-size: 0.72rem;
+    font-style: italic;
+  }
+
+  /* Prestige */
+  .prestige-section {
+    text-align: center;
+    padding: 12px;
+    border: 1px dashed var(--border);
+    border-radius: var(--radius);
+  }
+  .prestige-label {
+    font-size: 0.75rem;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+  }
+  .prestige-btn {
+    margin-top: 8px;
+    background: transparent;
+    border: 2px solid var(--zeta);
+    color: var(--zeta);
+    font-family: var(--font-math);
+    padding: 10px 28px;
+    border-radius: var(--radius);
+    cursor: pointer;
+    font-size: 0.9rem;
+    transition: all 0.15s;
+  }
+  .prestige-btn:hover:not(:disabled) {
+    background: rgba(107,143,191,0.12);
+  }
+  .prestige-btn:disabled {
+    opacity: 0.3;
+    cursor: not-allowed;
+  }
+  .prestige-info {
+    font-size: 0.72rem;
+    color: var(--muted);
+    margin-top: 4px;
+    font-style: italic;
+  }
+
+  /* Toast */
+  .toast {
+    position: fixed;
+    top: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: var(--surface);
+    border: 1px solid var(--gold);
+    color: var(--gold);
+    padding: 10px 24px;
+    border-radius: var(--radius);
+    font-family: var(--font-math);
+    font-size: 0.9rem;
+    opacity: 0;
+    transition: opacity 0.3s;
+    pointer-events: none;
+    z-index: 10;
+  }
+  .toast.show { opacity: 1; }
+
+  /* Responsive */
+  @media (max-width: 500px) {
+    .stats-row { grid-template-columns: 1fr 1fr; }
+    .failures-grid { grid-template-columns: 1fr; }
+    .header h1 { font-size: 1.5rem; }
+  }
+</style>
+</head>
+<body>
+
+<div class="game">
+  <div class="header">
+    <h1>Riemann Idle</h1>
+    <div class="subtitle">Fail to prove the Riemann Hypothesis. Repeatedly. Gloriously.</div>
+    <div class="zeta-display">ζ(s) = 0, Re(s) = ½ … maybe?</div>
+  </div>
+
+  <div class="board">
+    <!-- Progress -->
+    <div class="progress-section">
+      <div class="progress-label">
+        <span>Proof Progress</span>
+        <span id="progressText">0.000000%</span>
+      </div>
+      <div class="progress-bar">
+        <div class="progress-fill" id="progressFill" style="width: 0%"></div>
+      </div>
+    </div>
+
+    <!-- Stats -->
+    <div class="stats-row">
+      <div class="stat-card">
+        <div class="stat-value" id="totalAttempts">0</div>
+        <div class="stat-label">Total Attempts</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-value" id="apsDisplay">0</div>
+        <div class="stat-label">Attempts / sec</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-value" id="prestigeCount">0</div>
+        <div class="stat-label">Paradigm Shifts</div>
+      </div>
+    </div>
+
+    <!-- Click -->
+    <div class="click-zone">
+      <button class="attempt-btn" id="attemptBtn">Attempt Proof</button>
+    </div>
+
+    <!-- Last Failure Display -->
+    <div class="last-failure" id="lastFailure">
+      <div class="last-failure-placeholder">Click "Attempt Proof" to begin your catalogue of failures.</div>
+    </div>
+
+    <!-- Failure log -->
+    <div class="failures-header">Failure Catalogue</div>
+    <div class="failures-grid" id="failuresGrid"></div>
+
+    <!-- Upgrades -->
+    <div class="upgrades-section">
+      <div class="upgrades-header">Research Upgrades</div>
+      <div id="upgradesList"></div>
+    </div>
+
+    <!-- Prestige -->
+    <div class="prestige-section" id="prestigeSection">
+      <div class="prestige-label">Paradigm Shift</div>
+      <button class="prestige-btn" id="prestigeBtn" disabled>Shift Paradigm</button>
+      <div class="prestige-info" id="prestigeInfo">Reach 1% proof progress to unlock</div>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ── Game State ──────────────────────────────────────────────
+const FAILURE_TYPES = [
+  { id: 'trivial_zero',    name: 'Trivial Zero Confusion',      desc: 'Mistook a trivial zero for a non-trivial one.' },
+  { id: 'divergent',       name: 'Divergent Series',            desc: 'The series refused to converge. Again.' },
+  { id: 'circular',        name: 'Circular Reasoning',          desc: 'Assumed the conclusion somewhere in Lemma 3.' },
+  { id: 'off_critical',    name: 'Off the Critical Line',       desc: 'Found a zero at Re(s) ≠ ½. Or thought you did.' },
+  { id: 'numerical',       name: 'Numerical Instability',       desc: 'Floating-point betrayed you past t ≈ 10¹².' },
+  { id: 'handwavy',        name: 'Hand-Wavy Asymptotics',       desc: '"It is obvious that…" — Reviewer 2 disagreed.' },
+  { id: 'analytic_cont',   name: 'Incomplete Continuation',     desc: 'Analytic continuation didn\'t cover the whole strip.' },
+  { id: 'assuming_rh',     name: 'Assuming the Conjecture',     desc: 'The proof quietly assumed RH was true. Oops.' },
+  { id: 'spectral_gap',    name: 'Spectral Gap Mirage',         desc: 'Hilbert–Pólya looked promising. It wasn\'t.' },
+  { id: 'turing_machine',  name: 'Turing Machine Halts',        desc: 'The Zeta Machine™ computed forever then crashed.' },
+  { id: 'random_matrix',   name: 'Random Matrix Overfit',       desc: 'GUE statistics matched until they didn\'t.' },
+  { id: 'weil_explicit',   name: 'Weil Explicit Formula Trap',  desc: 'The explicit formula gave back what you put in.' },
+  { id: 'breaking_closures', name: 'Closure Violation',          desc: 'Assumed the zeros were closed under some operation they aren\'t. Tried to extend a closure beyond its valid domain. Every layer of math has its closure rules — this proof broke one.' },
+  // ── AI-specific failures ──────────────────────────────────
+  { id: 'hallucinated_lemma', name: 'Hallucinated Lemma',       desc: 'Cited a nonexistent theorem with full confidence.', category: 'ai' },
+  { id: 'token_drift',        name: 'Token Drift',              desc: 'Started on ζ(s), ended up proving something about elliptic curves.', category: 'ai' },
+  { id: 'confident_nonsense', name: 'Confident Nonsense',       desc: '"Clearly, all zeros lie on the critical line because…" [gibberish follows].', category: 'ai' },
+  { id: 'infinite_regress',   name: 'Infinite Regress',         desc: 'Reduced RH → GRH → Grand RH → … never reached ground.', category: 'ai' },
+  { id: 'training_echo',      name: 'Training Data Echo',       desc: 'Regurgitated a known flawed proof as original work.', category: 'ai' },
+  { id: 'context_amnesia',    name: 'Context Window Amnesia',   desc: 'Lemma 47 contradicts Lemma 1. The context window is the new "margin too narrow."', category: 'ai' },
+  { id: 'temperature_chaos',  name: 'Temperature Chaos',        desc: 'Proof started rigorous, ended: "…eigenvalues are banana."', category: 'ai' },
+  { id: 'over_alignment',     name: 'RLHF Over-Alignment',      desc: 'So eager to please, it produced a proof that sounds great and means nothing.', category: 'ai' },
+  { id: 'cot_decay',          name: 'Chain-of-Thought Decay',   desc: 'Each reasoning step lost 5% rigor. By step 14 it was pure vibes.', category: 'ai' },
+  { id: 'embedding_fallacy',  name: 'Embedding Proximity Fallacy', desc: '"Riemann" and "zeta function" are semantically nearby — the proof is just related terms arranged plausibly.', category: 'ai' },
+  { id: 'octonion_rabbit',    name: 'Lost in the Octonions',      desc: 'RH → Hilbert–Pólya → GUE → exceptional Lie groups → octonions → Fano plane → … never resurfaced.', category: 'ai' },
+  { id: 'transcendental_unify', name: 'Unifying Transcendental Functions', desc: 'Attempted to unify ζ(s), Γ(s), θ(t), and the modular j-function into one grand theory. The theory was grand. It was not a proof.', category: 'ai' },
+  { id: 'fuzzy_properties',    name: 'Fuzzy Properties',          desc: '"This function exhibits quasi-regularized sub-harmonic tendencies in the near-critical band." Every word sounds right. None of them mean anything.', category: 'ai' },
+  { id: 'unanchored_abstractions', name: 'Unanchored Abstractions', desc: 'Built a beautiful hierarchy: sheaves → motives → derived categories → … The zeros of ζ(s) were never mentioned again.', category: 'ai' },
+];
+
+// ── Illustration mapping ───────────────────────────────────
+const FAILURE_ILLUSTRATIONS = {
+  octonion_rabbit:       'octonion_rabbit.png',
+  transcendental_unify:  'transcendental_unify.png',
+  breaking_closures:     'closure_violation.png',
+};
+
+const UPGRADES = [
+  { id: 'grad_student',   name: 'Grad Student',        desc: 'Hire a grad student. +0.5 attempts/sec.',            baseCost: 15,   costMult: 1.5,  effect: { aps: 0.5 } },
+  { id: 'rigour_pill',    name: 'Rigour Pill',          desc: 'Reduces Hand-Wavy Asymptotics by 30%.',             baseCost: 30,   costMult: 1.6,  effect: { failReduce: { handwavy: 0.30 } } },
+  { id: 'computer',       name: 'Computer Access',      desc: 'Numerical checks up to t=10⁶. +1.0 aps, fewer numerical failures.', baseCost: 50, costMult: 1.7, effect: { aps: 1.0, failReduce: { numerical: 0.25 } } },
+  { id: 'supercomputer',  name: 'Supercomputer Time',   desc: 't=10⁹ territory. +2.5 aps, -40% numerical failures.', baseCost: 150, costMult: 1.8, effect: { aps: 2.5, failReduce: { numerical: 0.40 } } },
+  { id: 'selberg_trace',  name: 'Selberg Trace Formula', desc: 'Spectral approach. -25% spectral gap mirages.',    baseCost: 200,  costMult: 1.9,  effect: { failReduce: { spectral_gap: 0.25 } } },
+  { id: 'deligne_phone',  name: 'Call Deligne',         desc: '"Have you tried the Weil conjectures approach?" -20% Weil traps.', baseCost: 300, costMult: 2.0, effect: { failReduce: { weil_explicit: 0.20 } } },
+  { id: 'quantum',        name: 'Quantum Computer',     desc: 'Hilbert–Pólya on actual qubits. +5 aps, -35% spectral mirages.', baseCost: 500, costMult: 2.2, effect: { aps: 5.0, failReduce: { spectral_gap: 0.35 } } },
+  { id: 'proof_checker',  name: 'Automated Proof Checker', desc: 'Catches circular reasoning before you publish. -40% circular.', baseCost: 400, costMult: 2.0, effect: { failReduce: { circular: 0.40 } } },
+  // ── AI-countering upgrades ────────────────────────────────
+  { id: 'temp_zero',      name: 'Temperature = 0',       desc: 'Eliminates temperature chaos entirely. No more banana eigenvalues.', baseCost: 250, costMult: 1.8, effect: { failReduce: { temperature_chaos: 0.80 } } },
+  { id: 'rag_zeta',       name: 'RAG on ζ Literature',   desc: 'Retrieval-augmented generation. -50% hallucinated lemmas, -30% training echoes.', baseCost: 350, costMult: 1.9, effect: { failReduce: { hallucinated_lemma: 0.50, training_echo: 0.30 } } },
+  { id: 'long_context',   name: '1M Token Context Window', desc: 'Lemma 1 and Lemma 47 can coexist. -60% context amnesia.', baseCost: 450, costMult: 2.0, effect: { failReduce: { context_amnesia: 0.60 } } },
+  { id: 'formal_verifier', name: 'Lean4 Formal Verifier', desc: 'If it compiles, it\'s true. -50% confident nonsense, -40% CoT decay.', baseCost: 600, costMult: 2.1, effect: { failReduce: { confident_nonsense: 0.50, cot_decay: 0.40 } } },
+  { id: 'stop_tokens',    name: 'Strategic Stop Tokens',  desc: 'Stops before infinite regress. -70% infinite regress, -30% token drift.', baseCost: 300, costMult: 1.7, effect: { failReduce: { infinite_regress: 0.70, token_drift: 0.30 } } },
+  { id: 'constitutional', name: 'Constitutional Alignment', desc: 'RLHF but with actual math constraints. -60% over-alignment, -30% embedding fallacies.', baseCost: 500, costMult: 2.0, effect: { failReduce: { over_alignment: 0.60, embedding_fallacy: 0.30 } } },
+];
+
+let state = {
+  totalAttempts: 0,
+  failures: {},           // { failureId: count }
+  progress: 0,            // 0 to 100 (percentage)
+  prestigeCount: 0,
+  prestigeMult: 1.0,
+  aps: 0,                 // attempts per second (base, before prestige)
+  ownedUpgrades: {},      // { upgradeId: level }
+  lastAttemptTime: Date.now(),
+  lastFailureId: null,     // most recent failure for illustration display
+};
+
+// Init failure counts
+FAILURE_TYPES.forEach(f => { state.failures[f.id] = 0; });
+
+// ── Persistence ────────────────────────────────────────────
+const SAVE_KEY = 'riemann_idle_save';
+
+function save() {
+  localStorage.setItem(SAVE_KEY, JSON.stringify(state));
+}
+
+function load() {
+  const raw = localStorage.getItem(SAVE_KEY);
+  if (!raw) return;
+  try {
+    const saved = JSON.parse(raw);
+    // Merge: keep new failure types / upgrades that didn't exist in old saves
+    state = { ...state, ...saved };
+    FAILURE_TYPES.forEach(f => {
+      if (!(f.id in state.failures)) state.failures[f.id] = 0;
+    });
+    UPGRADES.forEach(u => {
+      if (!(u.id in state.ownedUpgrades)) state.ownedUpgrades[u.id] = 0;
+    });
+  } catch(e) {
+    console.warn('Save corrupted, starting fresh.');
+  }
+}
+
+// ── Derived values ─────────────────────────────────────────
+function getTotalAPS() {
+  let base = 0;
+  UPGRADES.forEach(u => {
+    const level = state.ownedUpgrades[u.id] || 0;
+    if (u.effect.aps) base += u.effect.aps * level;
+  });
+  return base * state.prestigeMult;
+}
+
+function getFailChance(failId) {
+  // Base chance: each failure type equally likely among the 12
+  let chance = 1.0 / FAILURE_TYPES.length;
+  // Apply reductions from upgrades
+  UPGRADES.forEach(u => {
+    const level = state.ownedUpgrades[u.id] || 0;
+    if (u.effect.failReduce && u.effect.failReduce[failId]) {
+      chance *= Math.pow(1 - u.effect.failReduce[failId], level);
+    }
+  });
+  return chance;
+}
+
+function getUpgradeCost(upgrade) {
+  const level = state.ownedUpgrades[upgrade.id] || 0;
+  return Math.floor(upgrade.baseCost * Math.pow(upgrade.costMult, level));
+}
+
+function getProgressPerAttempt() {
+  // Base: very tiny progress per attempt
+  // Increases slightly with prestige
+  return 0.0001 * (1 + state.prestigeCount * 0.5);
+}
+
+// ── Attempt logic ──────────────────────────────────────────
+function makeAttempt() {
+  state.totalAttempts++;
+
+  // Determine outcome: failure or progress
+  // Progress chance is very small, increases with prestige
+  const progressChance = 0.002 * (1 + state.prestigeCount * 0.3);
+
+  if (Math.random() < progressChance) {
+    // Made progress!
+    const gain = getProgressPerAttempt();
+    state.progress = Math.min(100, state.progress + gain);
+    return { type: 'progress', amount: gain };
+  }
+
+  // Failure: weighted random among failure types
+  const chances = FAILURE_TYPES.map(f => ({ id: f.id, chance: getFailChance(f.id) }));
+  const totalChance = chances.reduce((s, c) => s + c.chance, 0);
+  let roll = Math.random() * totalChance;
+  for (const c of chances) {
+    roll -= c.chance;
+    if (roll <= 0) {
+      state.failures[c.id] = (state.failures[c.id] || 0) + 1;
+      return { type: 'failure', failureId: c.id };
+    }
+  }
+  // Fallback (shouldn't happen)
+  state.failures['handwavy'] = (state.failures['handwavy'] || 0) + 1;
+  return { type: 'failure', failureId: 'handwavy' };
+}
+
+// ── Prestige ───────────────────────────────────────────────
+function canPrestige() {
+  return state.progress >= 1.0;
+}
+
+function prestige() {
+  if (!canPrestige()) return false;
+  state.prestigeCount++;
+  state.prestigeMult = 1.0 + state.prestigeCount * 0.5;
+
+  // Reset progress and attempts, keep failure counts as "historical record"
+  state.progress = 0;
+  state.totalAttempts = 0;
+  // Keep failures (they're the whole point — the catalogue persists)
+  // Keep upgrades
+  // Keep prestigeCount and prestigeMult
+
+  save();
+  return true;
+}
+
+// ── UI Rendering ───────────────────────────────────────────
+function renderStats() {
+  document.getElementById('totalAttempts').textContent = formatNumber(state.totalAttempts);
+  document.getElementById('apsDisplay').textContent = getTotalAPS().toFixed(1);
+  document.getElementById('prestigeCount').textContent = state.prestigeCount;
+}
+
+function renderProgress() {
+  const pct = state.progress;
+  document.getElementById('progressText').textContent = pct.toFixed(6) + '%';
+  document.getElementById('progressFill').style.width = pct + '%';
+}
+
+function renderFailures() {
+  const grid = document.getElementById('failuresGrid');
+  // Sort by count descending
+  const sorted = FAILURE_TYPES
+    .map(f => ({ ...f, count: state.failures[f.id] || 0 }))
+    .sort((a, b) => b.count - a.count);
+
+  grid.innerHTML = sorted.map(f => `
+    <div class="failure-entry${f.category === 'ai' ? ' ai-failure' : ''}" data-fid="${f.id}">
+      <span class="failure-name" title="${f.desc}">${f.name}</span>
+      <span class="failure-count">${formatNumber(f.count)}</span>
+    </div>
+  `).join('');
+}
+
+function renderUpgrades() {
+  const list = document.getElementById('upgradesList');
+  const totalFailures = Object.values(state.failures).reduce((s, c) => s + c, 0);
+
+  list.innerHTML = UPGRADES.map(u => {
+    const level = state.ownedUpgrades[u.id] || 0;
+    const cost = getUpgradeCost(u);
+    const canBuy = totalFailures >= cost;
+    return `
+      <div class="upgrade-row">
+        <div class="upgrade-info">
+          <span class="upgrade-name">${u.name} ${level > 0 ? `(×${level})` : ''}</span>
+          <span class="upgrade-effect">${u.desc}</span>
+        </div>
+        ${level > 0
+          ? `<span class="upgrade-owned">Owned ×${level}</span>`
+          : `<button class="upgrade-buy" data-uid="${u.id}" ${canBuy ? '' : 'disabled'}>${formatNumber(cost)} failures</button>`
+        }
+      </div>
+    `;
+  }).join('');
+}
+
+function renderPrestige() {
+  const btn = document.getElementById('prestigeBtn');
+  const info = document.getElementById('prestigeInfo');
+  if (canPrestige()) {
+    btn.disabled = false;
+    info.textContent = `Reset progress & attempts. Gain ×${(1 + (state.prestigeCount + 1) * 0.5).toFixed(1)} speed. Failure catalogue preserved.`;
+  } else {
+    btn.disabled = true;
+    info.textContent = `Reach 1% proof progress to unlock (currently ${state.progress.toFixed(4)}%)`;
+  }
+}
+
+function renderAll() {
+  renderStats();
+  renderProgress();
+  renderLastFailure();
+  renderFailures();
+  renderUpgrades();
+  renderPrestige();
+}
+
+// ── Last Failure Display ───────────────────────────────────
+function renderLastFailure() {
+  const el = document.getElementById('lastFailure');
+  if (!state.lastFailureId) {
+    el.innerHTML = '<div class="last-failure-placeholder">Click "Attempt Proof" to begin your catalogue of failures.</div>';
+    return;
+  }
+  const f = FAILURE_TYPES.find(ft => ft.id === state.lastFailureId);
+  if (!f) return;
+  const illus = FAILURE_ILLUSTRATIONS[state.lastFailureId];
+  const isAI = f.category === 'ai';
+  el.innerHTML = `
+    <div class="last-failure-content">
+      ${illus ? `<img class="last-failure-img" src="${illus}" alt="${f.name}">` : ''}
+      <div class="last-failure-caption${isAI ? ' ai-caption' : ''}">${f.name}</div>
+      <div class="last-failure-desc">${f.desc}</div>
+    </div>
+  `;
+}
+
+// ── Toast ──────────────────────────────────────────────────
+let toastTimer = null;
+function showToast(msg) {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.classList.add('show');
+  if (toastTimer) clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => el.classList.remove('show'), 2000);
+}
+
+// ── Flash a failure entry ──────────────────────────────────
+function flashFailure(failureId) {
+  const entry = document.querySelector(`.failure-entry[data-fid="${failureId}"]`);
+  if (!entry) return;
+  entry.classList.add('flash');
+  setTimeout(() => entry.classList.remove('flash'), 400);
+}
+
+// ── Formatting ─────────────────────────────────────────────
+function formatNumber(n) {
+  if (n >= 1e6) return (n / 1e6).toFixed(2) + 'M';
+  if (n >= 1e4) return (n / 1e3).toFixed(1) + 'K';
+  return Math.floor(n).toLocaleString();
+}
+
+// ── Game Loop ──────────────────────────────────────────────
+function tick() {
+  const now = Date.now();
+  const elapsed = (now - state.lastAttemptTime) / 1000;
+  const aps = getTotalAPS();
+
+  if (aps > 0 && elapsed >= 1 / aps) {
+    const attemptsThisTick = Math.floor(elapsed * aps);
+    if (attemptsThisTick > 0) {
+      // Batch attempts for performance
+      let progressGained = 0;
+      let lastFailureId = null;
+      for (let i = 0; i < attemptsThisTick; i++) {
+        const result = makeAttempt();
+        if (result.type === 'progress') {
+          progressGained += result.amount;
+        } else {
+          lastFailureId = result.failureId;
+        }
+      }
+      state.lastAttemptTime = now - (elapsed - attemptsThisTick / aps) * 1000;
+      if (lastFailureId) {
+        state.lastFailureId = lastFailureId;
+        flashFailure(lastFailureId);
+      }
+    }
+  } else if (aps === 0) {
+    state.lastAttemptTime = now;
+  }
+
+  renderAll();
+  save();
+}
+
+// ── Event Handlers ─────────────────────────────────────────
+document.getElementById('attemptBtn').addEventListener('click', () => {
+  const result = makeAttempt();
+  if (result.type === 'progress') {
+    showToast(`Progress! +${result.amount.toFixed(6)}% toward the proof.`);
+  } else {
+    const f = FAILURE_TYPES.find(ft => ft.id === result.failureId);
+    state.lastFailureId = result.failureId;
+    showToast(`${f.name}`);
+    flashFailure(result.failureId);
+  }
+  renderAll();
+  save();
+});
+
+document.getElementById('upgradesList').addEventListener('click', (e) => {
+  const btn = e.target.closest('.upgrade-buy');
+  if (!btn || btn.disabled) return;
+  const uid = btn.dataset.uid;
+  const upgrade = UPGRADES.find(u => u.id === uid);
+  if (!upgrade) return;
+  const cost = getUpgradeCost(upgrade);
+  const totalFailures = Object.values(state.failures).reduce((s, c) => s + c, 0);
+  if (totalFailures >= cost) {
+    // Spend failures (reduce counts proportionally)
+    const total = Object.values(state.failures).reduce((s, c) => s + c, 0);
+    const ratio = cost / total;
+    FAILURE_TYPES.forEach(f => {
+      state.failures[f.id] = Math.floor(state.failures[f.id] * (1 - ratio));
+    });
+    state.ownedUpgrades[uid] = (state.ownedUpgrades[uid] || 0) + 1;
+    showToast(`Acquired: ${upgrade.name}`);
+    renderAll();
+    save();
+  }
+});
+
+document.getElementById('prestigeBtn').addEventListener('click', () => {
+  if (!canPrestige()) return;
+  if (confirm(`Paradigm Shift #${state.prestigeCount + 1}\n\nReset progress and attempt count.\nKeep your failure catalogue and upgrades.\nGain ×${(1 + (state.prestigeCount + 1) * 0.5).toFixed(1)} attempt speed.\n\nProceed?`)) {
+    prestige();
+    showToast(`Paradigm Shift #${state.prestigeCount}! The old approach was flawed. A new era begins.`);
+    renderAll();
+  }
+});
+
+// ── Init ───────────────────────────────────────────────────
+load();
+renderAll();
+state.lastAttemptTime = Date.now();
+setInterval(tick, 100); // 10 ticks/sec for smooth idle feel
+
+console.log('Riemann Idle ready. ζ(½+it) awaits.');
+</script>
+</body>
+</html>
