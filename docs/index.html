@@ -934,6 +934,51 @@ function renderAll() {
   renderCollapseState();
 }
 
+// Lightweight tick update — only touches numbers in-place, never destroys DOM
+function renderTick() {
+  // Stats (textContent only, no DOM rebuild)
+  document.getElementById('totalAttempts').textContent = formatNumber(state.totalAttempts);
+  document.getElementById('apsDisplay').textContent = getTotalAPS().toFixed(1);
+  document.getElementById('prestigeCount').textContent = state.prestigeCount;
+
+  // Progress
+  const pct = state.progress;
+  document.getElementById('progressText').textContent = pct.toFixed(6) + '%';
+  document.getElementById('progressFill').style.width = pct + '%';
+
+  // Failure counts — update in-place by data-fid
+  FAILURE_TYPES.forEach(f => {
+    const entry = document.querySelector(`.failure-entry[data-fid="${f.id}"]`);
+    if (entry) {
+      const countEl = entry.querySelector('.failure-count');
+      if (countEl) countEl.textContent = formatNumber(state.failures[f.id] || 0);
+    }
+  });
+
+  // Upgrade buttons — update disabled state and cost text in-place
+  const totalFailures = Object.values(state.failures).reduce((s, c) => s + c, 0);
+  UPGRADES.forEach(u => {
+    const btn = document.querySelector(`.upgrade-buy[data-uid="${u.id}"]`);
+    if (btn) {
+      const cost = getUpgradeCost(u);
+      const canBuy = totalFailures >= cost;
+      btn.disabled = !canBuy;
+      btn.textContent = `${formatNumber(cost)} failures`;
+    }
+  });
+
+  // Prestige button state
+  const pBtn = document.getElementById('prestigeBtn');
+  const pInfo = document.getElementById('prestigeInfo');
+  if (canPrestige()) {
+    pBtn.disabled = false;
+    pInfo.textContent = `Reset progress & attempts. Gain ×${(1 + (state.prestigeCount + 1) * 0.5).toFixed(1)} speed. Failure catalogue preserved.`;
+  } else {
+    pBtn.disabled = true;
+    pInfo.textContent = `Reach 1% proof progress to unlock (currently ${state.progress.toFixed(4)}%)`;
+  }
+}
+
 // ── Toast ──────────────────────────────────────────────────
 let toastTimer = null;
 function showToast(msg) {
@@ -988,7 +1033,7 @@ function tick() {
     state.lastAttemptTime = now;
   }
 
-  renderAll();
+  renderTick();
   save();
 }
 
