@@ -562,6 +562,23 @@
           <div class="upgrades-list" id="upgradesList"></div>
         </div>
       </div>
+
+      <!-- About (collapsible, default minimized) -->
+      <div class="board">
+        <div class="section-header" id="aboutToggle">
+          <span class="section-title">About</span>
+          <span class="collapse-arrow" id="aboutArrow">▶</span>
+        </div>
+        <div class="collapsible-body collapsed" id="aboutBody">
+          <div style="padding: 8px 0; font-size: 0.82rem; line-height: 1.5; color: var(--text);">
+            <p>Riemann Idle is an idle game about failing to prove the Riemann Hypothesis. Every click is an attempt. Most attempts fail — in specific, named, illustrated ways.</p>
+            <p style="margin-top: 8px;">Built by <a href="https://medium.com/@eamondowling" target="_blank" style="color: var(--gold); text-decoration: none;">Eamon Dowling</a> with Hermes Agent, ComfyUI, and a lot of wrong proofs.</p>
+            <p style="margin-top: 8px;">
+              <a href="https://github.com/eamondowling/reimann-idle" target="_blank" style="color: var(--zeta); text-decoration: none;">github.com/eamondowling/reimann-idle</a>
+            </p>
+          </div>
+        </div>
+      </div>
     </div>
   </div>
 </div>
@@ -692,7 +709,7 @@ let state = {
   lastAttemptTime: Date.now(),
   lastFailureId: null,
   layoutMode: 'portrait',       // 'portrait' | 'landscape'
-  collapsedSections: { failures: false, upgrades: false },
+  collapsedSections: { failures: false, upgrades: false, about: true },
 };
 
 // Init failure counts
@@ -907,6 +924,8 @@ function renderCollapseState() {
   const failuresArrow = document.getElementById('failuresArrow');
   const upgradesBody = document.getElementById('upgradesBody');
   const upgradesArrow = document.getElementById('upgradesArrow');
+  const aboutBody = document.getElementById('aboutBody');
+  const aboutArrow = document.getElementById('aboutArrow');
 
   if (state.collapsedSections.failures) {
     failuresBody.classList.add('collapsed');
@@ -921,6 +940,13 @@ function renderCollapseState() {
   } else {
     upgradesBody.classList.remove('collapsed');
     upgradesArrow.classList.add('open');
+  }
+  if (state.collapsedSections.about) {
+    aboutBody.classList.add('collapsed');
+    aboutArrow.classList.remove('open');
+  } else {
+    aboutBody.classList.remove('collapsed');
+    aboutArrow.classList.add('open');
   }
 }
 
@@ -1104,6 +1130,12 @@ document.getElementById('failuresToggle').addEventListener('click', () => {
 
 document.getElementById('upgradesToggle').addEventListener('click', () => {
   state.collapsedSections.upgrades = !state.collapsedSections.upgrades;
+  renderAll();
+  save();
+});
+
+document.getElementById('aboutToggle').addEventListener('click', () => {
+  state.collapsedSections.about = !state.collapsedSections.about;
   renderAll();
   save();
 });
