@@ -30,7 +30,7 @@
     font-family: var(--font-ui);
     display: flex;
     justify-content: center;
-    align-items: center;
+    align-items: flex-start;
     min-height: 100vh;
     padding: 20px;
     background-image:
@@ -38,18 +38,40 @@
       radial-gradient(ellipse at 80% 100%, rgba(107,143,191,0.03) 0%, transparent 50%);
   }
 
+  /* ── Layout ─────────────────────────────────────────────── */
   .game {
-    max-width: 720px;
     width: 100%;
     display: flex;
     flex-direction: column;
     gap: 16px;
   }
+  /* Portrait (default) */
+  .game.portrait { max-width: 720px; }
+  .game.portrait .game-columns { flex-direction: column; }
+  .game.portrait .side-panel { max-height: none; }
+  .game.portrait .side-panel > * { max-height: none; }
 
-  /* Header */
+  /* Landscape */
+  .game.landscape { max-width: 1200px; }
+  .game.landscape .game-columns {
+    display: grid;
+    grid-template-columns: 1fr 380px;
+    gap: 16px;
+    align-items: start;
+  }
+  .game.landscape .side-panel {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    position: sticky;
+    top: 20px;
+  }
+
+  /* ── Header ─────────────────────────────────────────────── */
   .header {
     text-align: center;
     padding: 24px 0 8px;
+    position: relative;
   }
   .header h1 {
     font-family: var(--font-math);
@@ -71,8 +93,22 @@
     margin-top: 8px;
     opacity: 0.7;
   }
+  .layout-toggle {
+    position: absolute;
+    top: 24px;
+    right: 0;
+    background: transparent;
+    border: 1px solid var(--border);
+    color: var(--muted);
+    padding: 4px 12px;
+    border-radius: var(--radius);
+    cursor: pointer;
+    font-size: 0.72rem;
+    transition: all 0.15s;
+  }
+  .layout-toggle:hover { color: var(--chalk); border-color: var(--muted); }
 
-  /* Main board */
+  /* ── Main board ─────────────────────────────────────────── */
   .board {
     background: var(--surface);
     border: 1px solid var(--border);
@@ -210,9 +246,7 @@
     color: var(--fail);
     font-style: italic;
   }
-  .last-failure-caption.ai-caption {
-    color: var(--ai-fail);
-  }
+  .last-failure-caption.ai-caption { color: var(--ai-fail); }
   .last-failure-desc {
     font-size: 0.75rem;
     color: var(--muted);
@@ -220,21 +254,49 @@
     line-height: 1.4;
   }
 
-  /* Failure log */
-  .failures-header {
+  /* ── Collapsible sections ───────────────────────────────── */
+  .section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    cursor: pointer;
+    user-select: none;
+    padding: 2px 0;
+  }
+  .section-header:hover .section-title { color: var(--chalk); }
+  .section-title {
     font-size: 0.8rem;
     color: var(--muted);
     text-transform: uppercase;
     letter-spacing: 0.08em;
-    margin-bottom: 4px;
+    transition: color 0.15s;
   }
+  .collapse-arrow {
+    font-size: 0.7rem;
+    color: var(--muted);
+    transition: transform 0.2s;
+  }
+  .collapse-arrow.open { transform: rotate(90deg); }
+
+  .collapsible-body {
+    overflow: hidden;
+    transition: max-height 0.3s ease, opacity 0.2s;
+  }
+  .collapsible-body.collapsed {
+    max-height: 0 !important;
+    opacity: 0;
+    margin-top: 0 !important;
+  }
+
+  /* Failure log */
   .failures-grid {
     display: grid;
     grid-template-columns: 1fr 1fr;
     gap: 6px;
-    max-height: 240px;
+    max-height: 300px;
     overflow-y: auto;
     padding-right: 4px;
+    margin-top: 6px;
   }
   .failures-grid::-webkit-scrollbar { width: 4px; }
   .failures-grid::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
@@ -249,14 +311,14 @@
     border-radius: 4px;
     font-size: 0.78rem;
     transition: background 0.2s;
+    cursor: default;
+    position: relative;
   }
   .failure-entry.ai-failure {
     background: rgba(212,133,58,0.06);
     border: 1px solid rgba(212,133,58,0.18);
   }
-  .failure-entry.ai-failure .failure-count {
-    color: var(--ai-fail);
-  }
+  .failure-entry.ai-failure .failure-count { color: var(--ai-fail); }
   .failure-entry.flash {
     background: rgba(196,77,77,0.2);
     border-color: rgba(196,77,77,0.4);
@@ -277,17 +339,34 @@
     text-align: right;
   }
 
+  /* Hover tooltip */
+  .failure-tooltip {
+    display: none;
+    position: absolute;
+    bottom: calc(100% + 6px);
+    left: 50%;
+    transform: translateX(-50%);
+    background: var(--surface);
+    border: 1px solid var(--gold);
+    color: var(--chalk);
+    padding: 8px 12px;
+    border-radius: var(--radius);
+    font-size: 0.72rem;
+    line-height: 1.4;
+    max-width: 280px;
+    white-space: normal;
+    z-index: 20;
+    pointer-events: none;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+  }
+  .failure-entry:hover .failure-tooltip { display: block; }
+
   /* Upgrades */
-  .upgrades-section {
+  .upgrades-list {
     display: flex;
     flex-direction: column;
     gap: 6px;
-  }
-  .upgrades-header {
-    font-size: 0.8rem;
-    color: var(--muted);
-    text-transform: uppercase;
-    letter-spacing: 0.08em;
+    margin-top: 6px;
   }
   .upgrade-row {
     display: flex;
@@ -304,9 +383,7 @@
     flex-direction: column;
     gap: 2px;
   }
-  .upgrade-name {
-    color: var(--chalk);
-  }
+  .upgrade-name { color: var(--chalk); }
   .upgrade-effect {
     font-size: 0.72rem;
     color: var(--muted);
@@ -323,13 +400,8 @@
     transition: all 0.15s;
     white-space: nowrap;
   }
-  .upgrade-buy:hover:not(:disabled) {
-    background: rgba(91,140,90,0.15);
-  }
-  .upgrade-buy:disabled {
-    opacity: 0.3;
-    cursor: not-allowed;
-  }
+  .upgrade-buy:hover:not(:disabled) { background: rgba(91,140,90,0.15); }
+  .upgrade-buy:disabled { opacity: 0.3; cursor: not-allowed; }
   .upgrade-owned {
     color: var(--gold);
     font-size: 0.72rem;
@@ -361,16 +433,17 @@
     font-size: 0.9rem;
     transition: all 0.15s;
   }
-  .prestige-btn:hover:not(:disabled) {
-    background: rgba(107,143,191,0.12);
-  }
-  .prestige-btn:disabled {
-    opacity: 0.3;
-    cursor: not-allowed;
-  }
+  .prestige-btn:hover:not(:disabled) { background: rgba(107,143,191,0.12); }
+  .prestige-btn:disabled { opacity: 0.3; cursor: not-allowed; }
   .prestige-info {
     font-size: 0.72rem;
     color: var(--muted);
+    margin-top: 4px;
+    font-style: italic;
+  }
+  .prestige-bonus {
+    font-size: 0.7rem;
+    color: var(--gold);
     margin-top: 4px;
     font-style: italic;
   }
@@ -391,11 +464,15 @@
     opacity: 0;
     transition: opacity 0.3s;
     pointer-events: none;
-    z-index: 10;
+    z-index: 30;
   }
   .toast.show { opacity: 1; }
 
   /* Responsive */
+  @media (max-width: 800px) {
+    .game.landscape .game-columns { grid-template-columns: 1fr; }
+    .game.landscape .side-panel { position: static; }
+  }
   @media (max-width: 500px) {
     .stats-row { grid-template-columns: 1fr 1fr; }
     .failures-grid { grid-template-columns: 1fr; }
@@ -405,66 +482,86 @@
 </head>
 <body>
 
-<div class="game">
+<div class="game portrait" id="gameRoot">
   <div class="header">
     <h1>Riemann Idle</h1>
     <div class="subtitle">Fail to prove the Riemann Hypothesis. Repeatedly. Gloriously.</div>
     <div class="zeta-display">ζ(s) = 0, Re(s) = ½ … maybe?</div>
+    <button class="layout-toggle" id="layoutToggle" title="Toggle portrait/landscape layout">☷ Landscape</button>
   </div>
 
-  <div class="board">
-    <!-- Progress -->
-    <div class="progress-section">
-      <div class="progress-label">
-        <span>Proof Progress</span>
-        <span id="progressText">0.000000%</span>
+  <div class="game-columns">
+    <!-- Left / main column -->
+    <div class="board">
+      <!-- Progress -->
+      <div class="progress-section">
+        <div class="progress-label">
+          <span>Proof Progress</span>
+          <span id="progressText">0.000000%</span>
+        </div>
+        <div class="progress-bar">
+          <div class="progress-fill" id="progressFill" style="width: 0%"></div>
+        </div>
       </div>
-      <div class="progress-bar">
-        <div class="progress-fill" id="progressFill" style="width: 0%"></div>
+
+      <!-- Stats -->
+      <div class="stats-row">
+        <div class="stat-card">
+          <div class="stat-value" id="totalAttempts">0</div>
+          <div class="stat-label">Total Attempts</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value" id="apsDisplay">0</div>
+          <div class="stat-label">Attempts / sec</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value" id="prestigeCount">0</div>
+          <div class="stat-label">Paradigm Shifts</div>
+        </div>
+      </div>
+
+      <!-- Click -->
+      <div class="click-zone">
+        <button class="attempt-btn" id="attemptBtn">Attempt Proof</button>
+      </div>
+
+      <!-- Last Failure Display -->
+      <div class="last-failure" id="lastFailure">
+        <div class="last-failure-placeholder">Click "Attempt Proof" to begin your catalogue of failures.</div>
+      </div>
+
+      <!-- Prestige -->
+      <div class="prestige-section" id="prestigeSection">
+        <div class="prestige-label">Paradigm Shift</div>
+        <button class="prestige-btn" id="prestigeBtn" disabled>Shift Paradigm</button>
+        <div class="prestige-info" id="prestigeInfo">Reach 1% proof progress to unlock</div>
+        <div class="prestige-bonus" id="prestigeBonus"></div>
       </div>
     </div>
 
-    <!-- Stats -->
-    <div class="stats-row">
-      <div class="stat-card">
-        <div class="stat-value" id="totalAttempts">0</div>
-        <div class="stat-label">Total Attempts</div>
+    <!-- Right / side panel -->
+    <div class="side-panel">
+      <!-- Failure Catalogue (collapsible) -->
+      <div class="board">
+        <div class="section-header" id="failuresToggle">
+          <span class="section-title">Failure Catalogue</span>
+          <span class="collapse-arrow open" id="failuresArrow">▶</span>
+        </div>
+        <div class="collapsible-body" id="failuresBody">
+          <div class="failures-grid" id="failuresGrid"></div>
+        </div>
       </div>
-      <div class="stat-card">
-        <div class="stat-value" id="apsDisplay">0</div>
-        <div class="stat-label">Attempts / sec</div>
+
+      <!-- Research Upgrades (collapsible) -->
+      <div class="board">
+        <div class="section-header" id="upgradesToggle">
+          <span class="section-title">Research Upgrades</span>
+          <span class="collapse-arrow open" id="upgradesArrow">▶</span>
+        </div>
+        <div class="collapsible-body" id="upgradesBody">
+          <div class="upgrades-list" id="upgradesList"></div>
+        </div>
       </div>
-      <div class="stat-card">
-        <div class="stat-value" id="prestigeCount">0</div>
-        <div class="stat-label">Paradigm Shifts</div>
-      </div>
-    </div>
-
-    <!-- Click -->
-    <div class="click-zone">
-      <button class="attempt-btn" id="attemptBtn">Attempt Proof</button>
-    </div>
-
-    <!-- Last Failure Display -->
-    <div class="last-failure" id="lastFailure">
-      <div class="last-failure-placeholder">Click "Attempt Proof" to begin your catalogue of failures.</div>
-    </div>
-
-    <!-- Failure log -->
-    <div class="failures-header">Failure Catalogue</div>
-    <div class="failures-grid" id="failuresGrid"></div>
-
-    <!-- Upgrades -->
-    <div class="upgrades-section">
-      <div class="upgrades-header">Research Upgrades</div>
-      <div id="upgradesList"></div>
-    </div>
-
-    <!-- Prestige -->
-    <div class="prestige-section" id="prestigeSection">
-      <div class="prestige-label">Paradigm Shift</div>
-      <button class="prestige-btn" id="prestigeBtn" disabled>Shift Paradigm</button>
-      <div class="prestige-info" id="prestigeInfo">Reach 1% proof progress to unlock</div>
     </div>
   </div>
 </div>
@@ -535,6 +632,9 @@ const FAILURE_ILLUSTRATIONS = {
   unanchored_abstractions: 'unanchored_abstractions.png',
 };
 
+// Colorized versions (unlocked at prestige 3+)
+const COLOR_ILLUSTRATIONS = {}; // populated when colorized images exist
+
 const UPGRADES = [
   { id: 'grad_student',   name: 'Grad Student',        desc: 'Hire a grad student. +0.5 attempts/sec.',            baseCost: 15,   costMult: 1.5,  effect: { aps: 0.5 } },
   { id: 'rigour_pill',    name: 'Rigour Pill',          desc: 'Reduces Hand-Wavy Asymptotics by 30%.',             baseCost: 30,   costMult: 1.6,  effect: { failReduce: { handwavy: 0.30 } } },
@@ -555,14 +655,16 @@ const UPGRADES = [
 
 let state = {
   totalAttempts: 0,
-  failures: {},           // { failureId: count }
-  progress: 0,            // 0 to 100 (percentage)
+  failures: {},
+  progress: 0,
   prestigeCount: 0,
   prestigeMult: 1.0,
-  aps: 0,                 // attempts per second (base, before prestige)
-  ownedUpgrades: {},      // { upgradeId: level }
+  aps: 0,
+  ownedUpgrades: {},
   lastAttemptTime: Date.now(),
-  lastFailureId: null,     // most recent failure for illustration display
+  lastFailureId: null,
+  layoutMode: 'portrait',       // 'portrait' | 'landscape'
+  collapsedSections: { failures: false, upgrades: false },
 };
 
 // Init failure counts
@@ -580,7 +682,6 @@ function load() {
   if (!raw) return;
   try {
     const saved = JSON.parse(raw);
-    // Merge: keep new failure types / upgrades that didn't exist in old saves
     state = { ...state, ...saved };
     FAILURE_TYPES.forEach(f => {
       if (!(f.id in state.failures)) state.failures[f.id] = 0;
@@ -588,6 +689,9 @@ function load() {
     UPGRADES.forEach(u => {
       if (!(u.id in state.ownedUpgrades)) state.ownedUpgrades[u.id] = 0;
     });
+    // Ensure new state fields exist
+    if (!state.layoutMode) state.layoutMode = 'portrait';
+    if (!state.collapsedSections) state.collapsedSections = { failures: false, upgrades: false };
   } catch(e) {
     console.warn('Save corrupted, starting fresh.');
   }
@@ -604,9 +708,7 @@ function getTotalAPS() {
 }
 
 function getFailChance(failId) {
-  // Base chance: each failure type equally likely among the 12
   let chance = 1.0 / FAILURE_TYPES.length;
-  // Apply reductions from upgrades
   UPGRADES.forEach(u => {
     const level = state.ownedUpgrades[u.id] || 0;
     if (u.effect.failReduce && u.effect.failReduce[failId]) {
@@ -622,27 +724,26 @@ function getUpgradeCost(upgrade) {
 }
 
 function getProgressPerAttempt() {
-  // Base: very tiny progress per attempt
-  // Increases slightly with prestige
   return 0.0001 * (1 + state.prestigeCount * 0.5);
+}
+
+function getIllustration(failureId) {
+  // Use colorized version if prestige >= 3 and it exists
+  if (state.prestigeCount >= 3 && COLOR_ILLUSTRATIONS[failureId]) {
+    return COLOR_ILLUSTRATIONS[failureId];
+  }
+  return FAILURE_ILLUSTRATIONS[failureId];
 }
 
 // ── Attempt logic ──────────────────────────────────────────
 function makeAttempt() {
   state.totalAttempts++;
-
-  // Determine outcome: failure or progress
-  // Progress chance is very small, increases with prestige
   const progressChance = 0.002 * (1 + state.prestigeCount * 0.3);
-
   if (Math.random() < progressChance) {
-    // Made progress!
     const gain = getProgressPerAttempt();
     state.progress = Math.min(100, state.progress + gain);
     return { type: 'progress', amount: gain };
   }
-
-  // Failure: weighted random among failure types
   const chances = FAILURE_TYPES.map(f => ({ id: f.id, chance: getFailChance(f.id) }));
   const totalChance = chances.reduce((s, c) => s + c.chance, 0);
   let roll = Math.random() * totalChance;
@@ -653,7 +754,6 @@ function makeAttempt() {
       return { type: 'failure', failureId: c.id };
     }
   }
-  // Fallback (shouldn't happen)
   state.failures['handwavy'] = (state.failures['handwavy'] || 0) + 1;
   return { type: 'failure', failureId: 'handwavy' };
 }
@@ -667,14 +767,8 @@ function prestige() {
   if (!canPrestige()) return false;
   state.prestigeCount++;
   state.prestigeMult = 1.0 + state.prestigeCount * 0.5;
-
-  // Reset progress and attempts, keep failure counts as "historical record"
   state.progress = 0;
   state.totalAttempts = 0;
-  // Keep failures (they're the whole point — the catalogue persists)
-  // Keep upgrades
-  // Keep prestigeCount and prestigeMult
-
   save();
   return true;
 }
@@ -694,15 +788,15 @@ function renderProgress() {
 
 function renderFailures() {
   const grid = document.getElementById('failuresGrid');
-  // Sort by count descending
   const sorted = FAILURE_TYPES
     .map(f => ({ ...f, count: state.failures[f.id] || 0 }))
     .sort((a, b) => b.count - a.count);
 
   grid.innerHTML = sorted.map(f => `
     <div class="failure-entry${f.category === 'ai' ? ' ai-failure' : ''}" data-fid="${f.id}">
-      <span class="failure-name" title="${f.desc}">${f.name}</span>
+      <span class="failure-name">${f.name}</span>
       <span class="failure-count">${formatNumber(f.count)}</span>
+      <div class="failure-tooltip">${f.desc}</div>
     </div>
   `).join('');
 }
@@ -733,12 +827,72 @@ function renderUpgrades() {
 function renderPrestige() {
   const btn = document.getElementById('prestigeBtn');
   const info = document.getElementById('prestigeInfo');
+  const bonus = document.getElementById('prestigeBonus');
   if (canPrestige()) {
     btn.disabled = false;
     info.textContent = `Reset progress & attempts. Gain ×${(1 + (state.prestigeCount + 1) * 0.5).toFixed(1)} speed. Failure catalogue preserved.`;
   } else {
     btn.disabled = true;
     info.textContent = `Reach 1% proof progress to unlock (currently ${state.progress.toFixed(4)}%)`;
+  }
+  // Prestige bonus hints
+  if (state.prestigeCount >= 3 && Object.keys(COLOR_ILLUSTRATIONS).length > 0) {
+    bonus.textContent = '✨ Colorized illustrations unlocked!';
+  } else if (state.prestigeCount >= 3) {
+    bonus.textContent = 'Prestige 3 reached — colorized illustrations coming soon.';
+  } else if (state.prestigeCount >= 1) {
+    bonus.textContent = `Prestige ${state.prestigeCount} — reach 3 for colorized illustrations.`;
+  } else {
+    bonus.textContent = '';
+  }
+}
+
+function renderLastFailure() {
+  const el = document.getElementById('lastFailure');
+  if (!state.lastFailureId) {
+    el.innerHTML = '<div class="last-failure-placeholder">Click "Attempt Proof" to begin your catalogue of failures.</div>';
+    return;
+  }
+  const f = FAILURE_TYPES.find(ft => ft.id === state.lastFailureId);
+  if (!f) return;
+  const illus = getIllustration(state.lastFailureId);
+  const isAI = f.category === 'ai';
+  el.innerHTML = `
+    <div class="last-failure-content">
+      ${illus ? `<img class="last-failure-img" src="${illus}" alt="${f.name}">` : ''}
+      <div class="last-failure-caption${isAI ? ' ai-caption' : ''}">${f.name}</div>
+      <div class="last-failure-desc">${f.desc}</div>
+    </div>
+  `;
+}
+
+function renderLayout() {
+  const root = document.getElementById('gameRoot');
+  root.classList.remove('portrait', 'landscape');
+  root.classList.add(state.layoutMode);
+  const toggle = document.getElementById('layoutToggle');
+  toggle.textContent = state.layoutMode === 'portrait' ? '☷ Landscape' : '☰ Portrait';
+}
+
+function renderCollapseState() {
+  const failuresBody = document.getElementById('failuresBody');
+  const failuresArrow = document.getElementById('failuresArrow');
+  const upgradesBody = document.getElementById('upgradesBody');
+  const upgradesArrow = document.getElementById('upgradesArrow');
+
+  if (state.collapsedSections.failures) {
+    failuresBody.classList.add('collapsed');
+    failuresArrow.classList.remove('open');
+  } else {
+    failuresBody.classList.remove('collapsed');
+    failuresArrow.classList.add('open');
+  }
+  if (state.collapsedSections.upgrades) {
+    upgradesBody.classList.add('collapsed');
+    upgradesArrow.classList.remove('open');
+  } else {
+    upgradesBody.classList.remove('collapsed');
+    upgradesArrow.classList.add('open');
   }
 }
 
@@ -749,26 +903,8 @@ function renderAll() {
   renderFailures();
   renderUpgrades();
   renderPrestige();
-}
-
-// ── Last Failure Display ───────────────────────────────────
-function renderLastFailure() {
-  const el = document.getElementById('lastFailure');
-  if (!state.lastFailureId) {
-    el.innerHTML = '<div class="last-failure-placeholder">Click "Attempt Proof" to begin your catalogue of failures.</div>';
-    return;
-  }
-  const f = FAILURE_TYPES.find(ft => ft.id === state.lastFailureId);
-  if (!f) return;
-  const illus = FAILURE_ILLUSTRATIONS[state.lastFailureId];
-  const isAI = f.category === 'ai';
-  el.innerHTML = `
-    <div class="last-failure-content">
-      ${illus ? `<img class="last-failure-img" src="${illus}" alt="${f.name}">` : ''}
-      <div class="last-failure-caption${isAI ? ' ai-caption' : ''}">${f.name}</div>
-      <div class="last-failure-desc">${f.desc}</div>
-    </div>
-  `;
+  renderLayout();
+  renderCollapseState();
 }
 
 // ── Toast ──────────────────────────────────────────────────
@@ -805,7 +941,6 @@ function tick() {
   if (aps > 0 && elapsed >= 1 / aps) {
     const attemptsThisTick = Math.floor(elapsed * aps);
     if (attemptsThisTick > 0) {
-      // Batch attempts for performance
       let progressGained = 0;
       let lastFailureId = null;
       for (let i = 0; i < attemptsThisTick; i++) {
@@ -854,7 +989,6 @@ document.getElementById('upgradesList').addEventListener('click', (e) => {
   const cost = getUpgradeCost(upgrade);
   const totalFailures = Object.values(state.failures).reduce((s, c) => s + c, 0);
   if (totalFailures >= cost) {
-    // Spend failures (reduce counts proportionally)
     const total = Object.values(state.failures).reduce((s, c) => s + c, 0);
     const ratio = cost / total;
     FAILURE_TYPES.forEach(f => {
@@ -876,11 +1010,31 @@ document.getElementById('prestigeBtn').addEventListener('click', () => {
   }
 });
 
+// Layout toggle
+document.getElementById('layoutToggle').addEventListener('click', () => {
+  state.layoutMode = state.layoutMode === 'portrait' ? 'landscape' : 'portrait';
+  renderAll();
+  save();
+});
+
+// Collapse toggles
+document.getElementById('failuresToggle').addEventListener('click', () => {
+  state.collapsedSections.failures = !state.collapsedSections.failures;
+  renderAll();
+  save();
+});
+
+document.getElementById('upgradesToggle').addEventListener('click', () => {
+  state.collapsedSections.upgrades = !state.collapsedSections.upgrades;
+  renderAll();
+  save();
+});
+
 // ── Init ───────────────────────────────────────────────────
 load();
 renderAll();
 state.lastAttemptTime = Date.now();
-setInterval(tick, 100); // 10 ticks/sec for smooth idle feel
+setInterval(tick, 100);
 
 console.log('Riemann Idle ready. ζ(½+it) awaits.');
 </script>
