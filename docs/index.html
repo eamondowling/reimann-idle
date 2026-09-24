@@ -774,11 +774,14 @@ function getIllustration(failureId) {
   return FAILURE_ILLUSTRATIONS[failureId];
 }
 
+function getProgressChance() {
+  return 0.02 * (1 + state.prestigeCount * 0.3);
+}
+
 // ── Attempt logic ──────────────────────────────────────────
 function makeAttempt() {
   state.totalAttempts++;
-  const progressChance = 0.002 * (1 + state.prestigeCount * 0.3);
-  if (Math.random() < progressChance) {
+  if (Math.random() < getProgressChance()) {
     const gain = getProgressPerAttempt();
     state.progress = Math.min(100, state.progress + gain);
     return { type: 'progress', amount: gain };
@@ -795,6 +798,25 @@ function makeAttempt() {
   }
   state.failures['handwavy'] = (state.failures['handwavy'] || 0) + 1;
   return { type: 'failure', failureId: 'handwavy' };
+}
+
+// Expected-value resolution for large batches (offline catch-up, throttled tabs)
+const BULK_THRESHOLD = 1000;
+const MAX_OFFLINE_MS = 8 * 60 * 60 * 1000;
+
+function makeAttemptsBulk(n) {
+  state.totalAttempts += n;
+  const progressCount = n * getProgressChance();
+  state.progress = Math.min(100, state.progress + progressCount * getProgressPerAttempt());
+  const failCount = n - progressCount;
+  const chances = FAILURE_TYPES.map(f => ({ id: f.id, chance: getFailChance(f.id) }));
+  const totalChance = chances.reduce((s, c) => s + c.chance, 0);
+  let top = chances[0];
+  chances.forEach(c => {
+    state.failures[c.id] = (state.failures[c.id] || 0) + Math.floor(failCount * c.chance / totalChance);
+    if (c.chance > top.chance) top = c;
+  });
+  return top.id;
 }
 
 // ── Prestige ───────────────────────────────────────────────
@@ -1031,14 +1053,13 @@ function tick() {
   if (aps > 0 && elapsed >= 1 / aps) {
     const attemptsThisTick = Math.floor(elapsed * aps);
     if (attemptsThisTick > 0) {
-      let progressGained = 0;
       let lastFailureId = null;
-      for (let i = 0; i < attemptsThisTick; i++) {
-        const result = makeAttempt();
-        if (result.type === 'progress') {
-          progressGained += result.amount;
-        } else {
-          lastFailureId = result.failureId;
+      if (attemptsThisTick > BULK_THRESHOLD) {
+        lastFailureId = makeAttemptsBulk(attemptsThisTick);
+      } else {
+        for (let i = 0; i < attemptsThisTick; i++) {
+          const result = makeAttempt();
+          if (result.type === 'failure') lastFailureId = result.failureId;
         }
       }
       state.lastAttemptTime = now - (elapsed - attemptsThisTick / aps) * 1000;
@@ -1133,8 +1154,14 @@ document.getElementById('aboutToggle').addEventListener('click', () => {
 
 // ── Init ───────────────────────────────────────────────────
 load();
+const offlineMs = Math.min(Math.max(0, Date.now() - state.lastAttemptTime), MAX_OFFLINE_MS);
+state.lastAttemptTime = Date.now() - offlineMs;
+const offlineAttempts = Math.floor(offlineMs / 1000 * getTotalAPS());
+tick();
 renderAll();
-state.lastAttemptTime = Date.now();
+if (offlineAttempts > 0) {
+  showToast(`While you were away: ${formatNumber(offlineAttempts)} attempts.`);
+}
 setInterval(tick, 100);
 
 console.log('Riemann Idle ready. ζ(½+it) awaits.');
