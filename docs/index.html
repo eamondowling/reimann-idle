@@ -402,12 +402,6 @@
   }
   .upgrade-buy:hover:not(:disabled) { background: rgba(91,140,90,0.15); }
   .upgrade-buy:disabled { opacity: 0.3; cursor: not-allowed; }
-  .upgrade-owned {
-    color: var(--gold);
-    font-size: 0.72rem;
-    font-style: italic;
-  }
-
   /* Prestige */
   .prestige-section {
     text-align: center;
@@ -860,10 +854,7 @@ function renderUpgrades() {
           <span class="upgrade-name">${u.name} ${level > 0 ? `(×${level})` : ''}</span>
           <span class="upgrade-effect">${u.desc}</span>
         </div>
-        ${level > 0
-          ? `<span class="upgrade-owned">Owned ×${level}</span>`
-          : `<button class="upgrade-buy" data-uid="${u.id}" ${canBuy ? '' : 'disabled'}>${formatNumber(cost)} failures</button>`
-        }
+        <button class="upgrade-buy" data-uid="${u.id}" ${canBuy ? '' : 'disabled'}>${formatNumber(cost)} failures</button>
       </div>
     `;
   }).join('');
