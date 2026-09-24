@@ -154,7 +154,7 @@
   /* Stats row */
   .stats-row {
     display: grid;
-    grid-template-columns: repeat(3, 1fr);
+    grid-template-columns: repeat(4, 1fr);
     gap: 12px;
   }
   .stat-card {
@@ -509,6 +509,10 @@
           <div class="stat-label">Attempts / sec</div>
         </div>
         <div class="stat-card">
+          <div class="stat-value" id="progressOdds">0%</div>
+          <div class="stat-label">Progress Odds</div>
+        </div>
+        <div class="stat-card">
           <div class="stat-value" id="prestigeCount">0</div>
           <div class="stat-label">Paradigm Shifts</div>
         </div>
@@ -774,8 +778,12 @@ function getIllustration(failureId) {
   return FAILURE_ILLUSTRATIONS[failureId];
 }
 
+// Share of failure odds removed by counter upgrades that turns into progress instead
+const PREVENTED_TO_PROGRESS = 0.05;
+
 function getProgressChance() {
-  return 0.02 * (1 + state.prestigeCount * 0.3);
+  const failOdds = FAILURE_TYPES.reduce((s, f) => s + getFailChance(f.id), 0);
+  return 0.02 * (1 + state.prestigeCount * 0.3) + (1 - failOdds) * PREVENTED_TO_PROGRESS;
 }
 
 // ── Attempt logic ──────────────────────────────────────────
@@ -838,7 +846,12 @@ function prestige() {
 function renderStats() {
   document.getElementById('totalAttempts').textContent = formatNumber(state.totalAttempts);
   document.getElementById('apsDisplay').textContent = getTotalAPS().toFixed(1);
+  document.getElementById('progressOdds').textContent = formatOdds();
   document.getElementById('prestigeCount').textContent = state.prestigeCount;
+}
+
+function formatOdds() {
+  return (getProgressChance() * 100).toFixed(1) + '%';
 }
 
 function renderProgress() {
@@ -979,6 +992,7 @@ function renderTick() {
   // Stats (textContent only, no DOM rebuild)
   document.getElementById('totalAttempts').textContent = formatNumber(state.totalAttempts);
   document.getElementById('apsDisplay').textContent = getTotalAPS().toFixed(1);
+  document.getElementById('progressOdds').textContent = formatOdds();
   document.getElementById('prestigeCount').textContent = state.prestigeCount;
 
   // Progress
@@ -1111,7 +1125,9 @@ document.getElementById('upgradesList').addEventListener('click', (e) => {
       state.failures[f.id] = Math.floor(state.failures[f.id] * (1 - ratio));
     });
     state.ownedUpgrades[uid] = (state.ownedUpgrades[uid] || 0) + 1;
-    showToast(`Acquired: ${upgrade.name}`);
+    showToast(upgrade.effect.failReduce
+      ? `Acquired: ${upgrade.name}. Progress odds now ${formatOdds()}.`
+      : `Acquired: ${upgrade.name}`);
     renderAll();
     save();
   }
