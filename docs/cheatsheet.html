@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Riemann Idle Field Notes</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=Libre+Caslon+Text:ital,wght@0,400;0,700;1,400&display=swap">
+<style>
+  :root {
+    color-scheme: dark;
+    --bg: #0d0d0d;
+    --surface: #161614;
+    --chalk: #e8e4db;
+    --gold: #c9a84c;
+    --accent: #5b8c5a;
+    --fail: #c44d4d;
+    --ai-fail: #d4853a;
+    --zeta: #6b8fbf;
+    --text: #b8b4a8;
+    --muted: #7a7466;
+    --border: #2a2822;
+    --serif: 'Libre Caslon Text', Georgia, 'Times New Roman', serif;
+    --mono: 'IBM Plex Mono', ui-monospace, 'SF Mono', Menlo, monospace;
+    --ui: system-ui, 'Segoe UI', sans-serif;
+  }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--ui);
+    font-size: 15px;
+    line-height: 1.55;
+    margin: 0;
+    padding: 0 16px;
+  }
+  .page { max-width: 880px; margin: 0 auto; padding-block: 40px 64px; display: grid; gap: 44px; }
+  header { display: grid; gap: 10px; }
+  .eyebrow { font-family: var(--mono); font-size: 0.72rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--gold); }
+  h1 { font-family: var(--serif); font-weight: 400; color: var(--chalk); font-size: clamp(1.9rem, 5vw, 2.6rem); line-height: 1.15; text-wrap: balance; }
+  h1 em { color: var(--gold); }
+  .lede { max-width: 62ch; }
+  h2 { font-family: var(--serif); font-weight: 400; color: var(--chalk); font-size: 1.35rem; text-wrap: balance; }
+  h2 .sym { font-style: italic; color: var(--zeta); margin-right: 8px; }
+  section { display: grid; gap: 14px; }
+  p { max-width: 68ch; }
+  strong { color: var(--chalk); font-weight: 600; }
+  code, .num { font-family: var(--mono); font-size: 0.86em; font-variant-numeric: tabular-nums; }
+  code { color: var(--chalk); }
+
+  .loop { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 12px; }
+  .step { border-top: 1px solid var(--border); padding-top: 10px; display: grid; gap: 4px; }
+  .step b { font-family: var(--serif); font-weight: 400; color: var(--chalk); font-size: 1.05rem; }
+  .step span { font-size: 0.88rem; }
+
+  .callout { background: var(--surface); border: 1px solid var(--border); border-left: 3px solid var(--gold); padding: 14px 16px; display: grid; gap: 6px; }
+  .callout b { color: var(--gold); font-family: var(--serif); font-weight: 400; font-size: 1.05rem; }
+
+  .tbl { overflow-x: auto; border: 1px solid var(--border); background: var(--surface); }
+  table { border-collapse: collapse; width: 100%; font-size: 0.86rem; }
+  th, td { text-align: left; padding: 8px 12px; border-bottom: 1px solid var(--border); vertical-align: top; }
+  tr:last-child td { border-bottom: 0; }
+  th { font-family: var(--mono); font-weight: 500; font-size: 0.7rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); white-space: nowrap; }
+  td.n, th.n { text-align: right; font-family: var(--mono); font-variant-numeric: tabular-nums; white-space: nowrap; }
+  td.name { color: var(--chalk); white-space: nowrap; }
+  tr.goal td { color: var(--gold); }
+  tr.goal td.name { color: var(--gold); }
+  .tag { font-family: var(--mono); font-size: 0.68rem; padding: 1px 6px; border: 1px solid currentColor; border-radius: 3px; white-space: nowrap; }
+  .tag.speed { color: var(--accent); }
+  .tag.gold { color: var(--gold); }
+  .muted { color: var(--muted); }
+
+  .formulas { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 10px 24px; }
+  .formula { display: grid; gap: 2px; padding-block: 8px; border-bottom: 1px dashed var(--border); }
+  .formula .lbl { font-size: 0.8rem; color: var(--muted); }
+  .formula .eq { font-family: var(--mono); color: var(--chalk); font-size: 0.9rem; }
+
+  .cat { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 24px; }
+  .cat h3 { font-family: var(--mono); font-weight: 500; font-size: 0.72rem; letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 8px; }
+  .cat h3.classic { color: var(--fail); }
+  .cat h3.ai { color: var(--ai-fail); }
+  .cat ul { list-style: none; display: grid; gap: 0; }
+  .cat li { display: flex; justify-content: space-between; gap: 12px; padding: 5px 0; border-bottom: 1px solid var(--border); font-size: 0.86rem; }
+  .cat li span:first-child { color: var(--chalk); }
+  .cat li span:last-child { color: var(--muted); text-align: right; }
+
+  ol.plan { padding-left: 1.3em; display: grid; gap: 8px; max-width: 68ch; }
+  ol.plan li::marker { font-family: var(--mono); color: var(--gold); }
+  footer { font-size: 0.8rem; color: var(--muted); border-top: 1px solid var(--border); padding-top: 14px; }
+</style>
+</head>
+<body>
+
+<div class="page">
+  <header>
+    <div class="eyebrow">Cheat sheet · v1.5 · commit e72654c</div>
+    <h1>Riemann Idle, <em>field notes</em> for failing efficiently</h1>
+    <p class="lede">Every number on this page comes straight from the game's code. Time estimates come from simulating a player who always buys the upgrade that raises progress rate the most per failure spent, and never clicks after the first 15.</p>
+  </header>
+
+  <section>
+    <h2><span class="sym">ζ</span>The loop</h2>
+    <div class="loop">
+      <div class="step"><b>Attempt</b><span>A click or an auto-attempt. Each one either makes a little proof progress (rare) or logs a named failure.</span></div>
+      <div class="step"><b>Fail</b><span>Failures are the currency. Upgrades cost failures, taken proportionally from every type in your catalogue.</span></div>
+      <div class="step"><b>Upgrade</b><span>Speed upgrades add attempts per second. Counter upgrades raise your progress odds. Every upgrade can be bought again and again, and each level costs more than the last.</span></div>
+      <div class="step"><b>Paradigm Shift</b><span>At 1% proof progress, prestige. Progress and attempt count reset; failures and upgrades stay.</span></div>
+    </div>
+  </section>
+
+  <section>
+    <div class="callout">
+      <b>Two ways to go faster: more attempts, or better odds.</b>
+      <p>Grad Student, Computer Access, Supercomputer Time and Quantum Computer add attempts per second. Counter upgrades cut a failure type's odds, and 5% of the odds they remove becomes progress chance, shown in the <strong>Progress Odds</strong> stat. The best play mixes both: by the first Paradigm Shift a good build has lifted progress odds from 2.0% to about 4.5%. The catch is that prevented failures aren't earned, so heavy countering slightly slows your upgrade income.</p>
+    </div>
+  </section>
+
+  <section>
+    <h2><span class="sym">½</span>Paradigm Shifts</h2>
+    <p>Each prestige raises your speed multiplier, your base chance of progress per attempt, and how much each progress hit is worth. The target is always 1%.</p>
+    <div class="tbl">
+      <table>
+        <thead><tr><th>Prestige</th><th class="n">Speed ×</th><th class="n">Base odds</th><th class="n">Per hit</th><th class="n">Attempts to 1% (base odds)</th><th class="n">Sim. total time</th><th>Unlock</th></tr></thead>
+        <tbody>
+          <tr><td class="name">0</td><td class="n">1.0</td><td class="n">2.0%</td><td class="n">0.00010%</td><td class="n">500,000</td><td class="n">—</td><td class="muted">Start</td></tr>
+          <tr><td class="name">1</td><td class="n">1.5</td><td class="n">2.6%</td><td class="n">0.00015%</td><td class="n">≈256,000</td><td class="n">≈1.2 h</td><td class="muted">—</td></tr>
+          <tr><td class="name">2</td><td class="n">2.0</td><td class="n">3.2%</td><td class="n">0.00020%</td><td class="n">≈156,000</td><td class="n">≈1.5 h</td><td class="muted">—</td></tr>
+          <tr class="goal"><td class="name">3</td><td class="n">2.5</td><td class="n">3.8%</td><td class="n">0.00025%</td><td class="n">≈105,000</td><td class="n">≈1.7 h</td><td><span class="tag gold">Colorized illustrations</span></td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="muted">"Sim. total time" is cumulative from a fresh save, counting open-tab time plus offline credit. "Attempts to 1%" assumes no counter bonus; counters bring it down further.</p>
+  </section>
+
+  <section>
+    <h2><span class="sym">∑</span>Speed upgrades</h2>
+    <p>Cost of level <i>n</i> = <code>floor(base × mult<sup>n</sup>)</code>. Buy whichever gives the most attempts/sec per failure right now. Early on that's almost always Grad Student.</p>
+    <div class="tbl">
+      <table>
+        <thead><tr><th>Upgrade</th><th class="n">+APS / level</th><th class="n">Lv 1</th><th class="n">Lv 2</th><th class="n">Lv 3</th><th class="n">Lv 4</th><th class="n">Lv 5</th><th class="n">Lv 10</th><th class="n">APS per 100 fails (Lv 1)</th></tr></thead>
+        <tbody>
+          <tr><td class="name">Grad Student</td><td class="n">0.5</td><td class="n">15</td><td class="n">22</td><td class="n">33</td><td class="n">50</td><td class="n">75</td><td class="n">576</td><td class="n">3.3</td></tr>
+          <tr><td class="name">Computer Access</td><td class="n">1.0</td><td class="n">50</td><td class="n">85</td><td class="n">144</td><td class="n">245</td><td class="n">417</td><td class="n">5,929</td><td class="n">2.0</td></tr>
+          <tr><td class="name">Supercomputer Time</td><td class="n">2.5</td><td class="n">150</td><td class="n">270</td><td class="n">486</td><td class="n">874</td><td class="n">1,574</td><td class="n">29,753</td><td class="n">1.7</td></tr>
+          <tr><td class="name">Quantum Computer</td><td class="n">5.0</td><td class="n">500</td><td class="n">1,100</td><td class="n">2,420</td><td class="n">5,324</td><td class="n">11,712</td><td class="n">603,634</td><td class="n">1.0</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="muted">Base APS is multiplied by the prestige speed multiplier. At the first Paradigm Shift the simulated player owned roughly Grad ×15, Computer ×11, Supercomputer ×9, Quantum ×7, for about 76 APS, plus 3–8 levels of every counter.</p>
+  </section>
+
+  <section>
+    <h2><span class="sym">∂</span>Counter upgrades</h2>
+    <p>Each level multiplies the named failure's odds by (1 − reduction), and levels compound. Every failure type starts at 1/27 odds, and 5% of whatever you remove turns into progress odds. Example: one level of Temperature = 0 removes 80% of 1/27 ≈ 2.96%, adding about 0.15% to progress odds (2.0% → 2.1%). Counters that hit two failure types give the most per level.</p>
+    <div class="tbl">
+      <table>
+        <thead><tr><th>Upgrade</th><th>Counters</th><th class="n">Lv 1</th><th class="n">Lv 2</th><th class="n">Lv 3</th><th class="n">×</th></tr></thead>
+        <tbody>
+          <tr><td class="name">Rigour Pill</td><td>Hand-Wavy −30%</td><td class="n">30</td><td class="n">48</td><td class="n">76</td><td class="n">1.6</td></tr>
+          <tr><td class="name">Computer Access <span class="tag speed">speed</span></td><td>Numerical −25%</td><td class="n">50</td><td class="n">85</td><td class="n">144</td><td class="n">1.7</td></tr>
+          <tr><td class="name">Supercomputer Time <span class="tag speed">speed</span></td><td>Numerical −40%</td><td class="n">150</td><td class="n">270</td><td class="n">486</td><td class="n">1.8</td></tr>
+          <tr><td class="name">Selberg Trace Formula</td><td>Spectral Gap −25%</td><td class="n">200</td><td class="n">380</td><td class="n">722</td><td class="n">1.9</td></tr>
+          <tr><td class="name">Temperature = 0</td><td>Temperature Chaos −80%</td><td class="n">250</td><td class="n">450</td><td class="n">810</td><td class="n">1.8</td></tr>
+          <tr><td class="name">Call Deligne</td><td>Weil Explicit −20%</td><td class="n">300</td><td class="n">600</td><td class="n">1,200</td><td class="n">2.0</td></tr>
+          <tr><td class="name">Strategic Stop Tokens</td><td>Infinite Regress −70%, Token Drift −30%</td><td class="n">300</td><td class="n">510</td><td class="n">866</td><td class="n">1.7</td></tr>
+          <tr><td class="name">RAG on ζ Literature</td><td>Hallucinated Lemma −50%, Training Echo −30%</td><td class="n">350</td><td class="n">665</td><td class="n">1,263</td><td class="n">1.9</td></tr>
+          <tr><td class="name">Automated Proof Checker</td><td>Circular −40%</td><td class="n">400</td><td class="n">800</td><td class="n">1,600</td><td class="n">2.0</td></tr>
+          <tr><td class="name">1M Token Context Window</td><td>Context Amnesia −60%</td><td class="n">450</td><td class="n">900</td><td class="n">1,800</td><td class="n">2.0</td></tr>
+          <tr><td class="name">Quantum Computer <span class="tag speed">speed</span></td><td>Spectral Gap −35%</td><td class="n">500</td><td class="n">1,100</td><td class="n">2,420</td><td class="n">2.2</td></tr>
+          <tr><td class="name">Constitutional Alignment</td><td>Over-Alignment −60%, Embedding Fallacy −30%</td><td class="n">500</td><td class="n">1,000</td><td class="n">2,000</td><td class="n">2.0</td></tr>
+          <tr><td class="name">Lean4 Formal Verifier</td><td>Confident Nonsense −50%, CoT Decay −40%</td><td class="n">600</td><td class="n">1,260</td><td class="n">2,646</td><td class="n">2.1</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section>
+    <h2><span class="sym">ρ</span>The failure catalogue</h2>
+    <p>27 failure types, 13 classical and 14 AI-flavored. All start at equal odds (1 in 27). Right side shows what counters each one.</p>
+    <div class="cat">
+      <div>
+        <h3 class="classic">Classical · 13</h3>
+        <ul>
+          <li><span>Trivial Zero Confusion</span><span>—</span></li>
+          <li><span>Divergent Series</span><span>—</span></li>
+          <li><span>Circular Reasoning</span><span>Proof Checker</span></li>
+          <li><span>Off the Critical Line</span><span>—</span></li>
+          <li><span>Numerical Instability</span><span>Computer, Supercomputer</span></li>
+          <li><span>Hand-Wavy Asymptotics</span><span>Rigour Pill</span></li>
+          <li><span>Incomplete Continuation</span><span>—</span></li>
+          <li><span>Assuming the Conjecture</span><span>—</span></li>
+          <li><span>Spectral Gap Mirage</span><span>Selberg, Quantum</span></li>
+          <li><span>Turing Machine Halts</span><span>—</span></li>
+          <li><span>Random Matrix Overfit</span><span>—</span></li>
+          <li><span>Weil Explicit Formula Trap</span><span>Call Deligne</span></li>
+          <li><span>Closure Violation</span><span>—</span></li>
+        </ul>
+      </div>
+      <div>
+        <h3 class="ai">AI failures · 14</h3>
+        <ul>
+          <li><span>Hallucinated Lemma</span><span>RAG</span></li>
+          <li><span>Token Drift</span><span>Stop Tokens</span></li>
+          <li><span>Confident Nonsense</span><span>Lean4</span></li>
+          <li><span>Infinite Regress</span><span>Stop Tokens</span></li>
+          <li><span>Training Data Echo</span><span>RAG</span></li>
+          <li><span>Context Window Amnesia</span><span>1M Context</span></li>
+          <li><span>Temperature Chaos</span><span>Temperature = 0</span></li>
+          <li><span>RLHF Over-Alignment</span><span>Constitutional</span></li>
+          <li><span>Chain-of-Thought Decay</span><span>Lean4</span></li>
+          <li><span>Embedding Proximity Fallacy</span><span>Constitutional</span></li>
+          <li><span>Lost in the Octonions</span><span>—</span></li>
+          <li><span>Unifying Transcendental Functions</span><span>—</span></li>
+          <li><span>Fuzzy Properties</span><span>—</span></li>
+          <li><span>Unanchored Abstractions</span><span>—</span></li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2><span class="sym">∫</span>Formulas</h2>
+    <div class="formulas">
+      <div class="formula"><span class="lbl">Attempts per second</span><span class="eq">Σ(aps × level) × (1 + 0.5P)</span></div>
+      <div class="formula"><span class="lbl">Progress chance per attempt</span><span class="eq">0.02 × (1 + 0.3P) + 0.05 × prevented</span></div>
+      <div class="formula"><span class="lbl">Prevented failure odds</span><span class="eq">1 − Σ failure odds</span></div>
+      <div class="formula"><span class="lbl">Progress per hit (%)</span><span class="eq">0.0001 × (1 + 0.5P)</span></div>
+      <div class="formula"><span class="lbl">Upgrade cost at level n</span><span class="eq">floor(base × mult<sup>n</sup>)</span></div>
+      <div class="formula"><span class="lbl">Failure odds (before re-weighting)</span><span class="eq">1/27 × Π(1 − reduce)<sup>level</sup></span></div>
+      <div class="formula"><span class="lbl">Offline credit on reopen</span><span class="eq">min(time away, 8 h) × APS</span></div>
+    </div>
+    <p class="muted"><i>P</i> is your prestige count.</p>
+  </section>
+
+  <section>
+    <h2><span class="sym">∞</span>Offline and saves</h2>
+    <p>The game saves to your browser's local storage ten times a second. When you reopen it, time away is credited as auto-attempts, <strong>capped at 8 hours</strong>, and a toast tells you how many ran. Clicks don't count while you're away, so buy at least one Grad Student before leaving. Clearing site data, private windows and switching browsers or devices all start a fresh save; there is no export.</p>
+  </section>
+
+  <section>
+    <h2><span class="sym">∴</span>Fastest route to color</h2>
+    <ol class="plan">
+      <li>Click 15 times and buy a Grad Student.</li>
+      <li>Early on, buy speed upgrades with the best APS per failure. Once you have a few speed levels, start mixing in counters. Their value grows with your APS, because better odds multiply every attempt you make.</li>
+      <li>Leave the tab open or come back within 8 hours so no offline time is wasted.</li>
+      <li>Paradigm Shift the moment you hit 1%. Each shift is permanent speed and makes the next 1% much cheaper.</li>
+      <li>Third shift: every illustration in the last-failure panel switches to its colorized version.</li>
+    </ol>
+  </section>
+
+  <footer><a href="./" style="color: var(--gold);">Play Riemann Idle</a> · v1.5 · riemann-idle by Eamon Dowling · figures derived from <code>docs/index.html</code> at commit e72654c.</footer>
+</div>
+</body>
+</html>
